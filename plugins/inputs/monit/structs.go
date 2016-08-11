@@ -8,8 +8,8 @@ type Manager struct {
 
 type Monit struct {
 	Manager
-	Server      Instance            `xml:"server"`
-	Platform    System              `xml:"platform"`
+	Server      `xml:"server"`
+	Platform    `xml:"platform"`
 	Filesystems []ServiceFilesystem // type=0
 	Directories []ServiceDirectory  // type=1
 	Files       []ServiceFile       // type=2
@@ -21,7 +21,7 @@ type Monit struct {
 	Networks    []ServiceNet        // type=8
 }
 
-type Instance struct {
+type Server struct {
 	ID            string `xml:"id"`
 	Incarnation   string `xml:"incarnation"`
 	Version       string `xml:"version"`
@@ -30,16 +30,14 @@ type Instance struct {
 	StartDelay    string `xml:"startdelay"`
 	LocalHostName string `xml:"localhostname"`
 	ControlFile   string `xml:"controlfile"`
-	Httpd         Httpd  `xml:"httpd"`
+	Httpd         struct {
+		Address string `xml:"address"`
+		Port    string `xml:"port"`
+		SSL     int    `xml:"ssl"`
+	} `xml:"httpd" structs:",dotflatten"`
 }
 
-type Httpd struct {
-	Address string `xml:"address"`
-	Port    string `xml:"port"`
-	SSL     int    `xml:"ssl"`
-}
-
-type System struct {
+type Platform struct {
 	Name    string `xml:"name"`
 	Release string `xml:"release"`
 	Version string `xml:"version"`
@@ -65,7 +63,7 @@ type System struct {
 // <size>12375</size>
 // </service>
 type ServiceFile struct {
-	Service
+	Service `structs:",flatten"`
 }
 
 // ServiceDirectory - monit's <service type="1">
@@ -83,7 +81,7 @@ type ServiceFile struct {
 // <timestamp>1465722239</timestamp>
 // </service>
 type ServiceDirectory struct {
-	Service
+	Service `structs:",flatten"`
 }
 
 // ServiceFifo - monit's <service type="6">
@@ -101,7 +99,7 @@ type ServiceDirectory struct {
 // <timestamp>1468351653</timestamp>
 // </service>
 type ServiceFifo struct {
-	Service
+	Service `structs:",flatten"`
 }
 
 // ServiceFilesystem - monit's <service type="0">
@@ -129,7 +127,7 @@ type ServiceFifo struct {
 // </inode>
 // </service>
 type ServiceFilesystem struct {
-	Service
+	Service `structs:",flatten"`
 }
 
 // ServiceNet - monit's <service type="8">
@@ -176,7 +174,7 @@ type ServiceFilesystem struct {
 //  </link>
 // </service>
 type ServiceNet struct {
-	Service
+	Service `structs:",flatten"`
 }
 
 // ServiceProgramm - monit's <service type="7">
@@ -197,7 +195,7 @@ type ServiceNet struct {
 // </program>
 // </service>
 type ServiceProgramm struct {
-	Service
+	Service `structs:",flatten"`
 }
 
 // ServiceHost - monit's <service type="4">
@@ -215,66 +213,62 @@ type ServiceProgramm struct {
 // </icmp>
 // </service>
 type ServiceHost struct {
-	Service
+	Service `structs:",flatten"`
 }
 
 // ServiceSystem - monit's <service type="5">
 type ServiceSystem struct {
-	Service
-	System struct {
+	Service `structs:",flatten"`
+	System  struct {
 		Load struct {
 			Average01 float32 `xml:"avg01"`
 			Average05 float32 `xml:"avg05"`
 			Average15 float32 `xml:"avg15"`
-		} `xml:"load"`
+		} `xml:"load" structs:",dotflatten"`
 		CPU struct {
 			User   float32 `xml:"user"`
 			System float32 `xml:"system"`
 			Wait   float32 `xml:"wait"`
-		} `xml:"cpu"`
+		} `xml:"cpu" structs:",dotflatten"`
 		Memory struct {
 			Percent  float32 `xml:"percent"`
 			KiloByte int     `xml:"kilobyte"`
-		} `xml:"memory"`
+		} `xml:"memory" structs:",dotflatten"`
 		Swap struct {
 			Percent  float32 `xml:"percent"`
 			KiloByte int     `xml:"kilobyte"`
-		} `xml:"swap"`
-	} `xml:"system"`
+		} `xml:"swap" structs:",dotflatten"`
+	} `xml:"system" structs:",flatten"`
 }
 
 // ServiceProcess - monit's <service type="3">
 type ServiceProcess struct {
-	Service
-	PID      int           `xml:"pid"`
-	PPID     int           `xml:"ppid"`
-	UID      int           `xml:"uid"`
-	EUID     int           `xml:"euid"`
-	GID      int           `xml:"gid"`
-	Uptime   int           `xml:"uptime"`
-	Threads  int           `xml:"threads"`
-	Children int           `xml:"children"`
-	Memory   ProcessMemory `xml:"memory"`
-	CPU      ProcessCPU    `xml:"cpu"`
-}
-
-type ProcessMemory struct {
-	Percent      float32 `xml:"percent"`
-	PercentTotal float32 `xml:"percenttotal"`
-	// TODO maybe int64 will be needed
-	KiloByte      int `xml:"kilobyte"`
-	KiloByteTotal int `xml:"kilobytetotal"`
-}
-
-type ProcessCPU struct {
-	Percent      float32 `xml:"percent"`
-	PercentTotal float32 `xml:"percenttotal"`
+	Service  `structs:",flatten"`
+	PID      int `xml:"pid"`
+	PPID     int `xml:"ppid"`
+	UID      int `xml:"uid"`
+	EUID     int `xml:"euid"`
+	GID      int `xml:"gid"`
+	Uptime   int `xml:"uptime"`
+	Threads  int `xml:"threads"`
+	Children int `xml:"children"`
+	Memory   struct {
+		Percent      float32 `xml:"percent"`
+		PercentTotal float32 `xml:"percenttotal"`
+		// TODO maybe int64 will be needed
+		KiloByte      int `xml:"kilobyte"`
+		KiloByteTotal int `xml:"kilobytetotal"`
+	} `xml:"memory" structs:",dotflatten"`
+	CPU struct {
+		Percent      float32 `xml:"percent"`
+		PercentTotal float32 `xml:"percenttotal"`
+	} `xml:"cpu" structs:",dotflatten"`
 }
 
 // Service - common service structure for all subservices
 type Service struct {
-	ServiceType string `xml:"type,attr"`
-	Name        string `xml:"name"`
+	Type string `xml:"type,attr"`
+	Name string `xml:"name"`
 	// TODO maybe int64 will be needed
 	CollectedSec  int `xml:"collected_sec"`
 	CollectedUSec int `xml:"collected_usec"`

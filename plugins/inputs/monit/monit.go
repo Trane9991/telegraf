@@ -11,7 +11,8 @@ import (
 
 	"golang.org/x/net/html/charset"
 
-	"github.com/fatih/structs"
+	"github.com/trane9991/structs"
+
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
@@ -83,29 +84,12 @@ func (m *MonitConfigs) gatherUrl(addr *url.URL, acc telegraf.Accumulator) error 
 		return fmt.Errorf("%s returned HTTP status %s", addr.String(), resp.Status)
 	}
 	// tags := getTags(addr)
+	// TODO fix this. dropping m.Instance data to stop acumulating it
+	m.Instance = Monit{}
 	m.Instance.Parse(resp.Body)
 	m.Instance.structurizeFieldsForTelegraf(acc)
 
 	return nil
-}
-
-func (s Service) createFieldsForTelegraf() map[string]interface{} {
-	return structs.Map(s)
-}
-
-func (s ServiceSystem) createFieldsForTelegraf() map[string]interface{} {
-	fields := s.Service.createFieldsForTelegraf()
-	fields["System.Load.Average01"] = s.System.Load.Average01
-	fields["System.Load.Average05"] = s.System.Load.Average05
-	fields["System.Load.Average15"] = s.System.Load.Average15
-	fields["System.CPU.System"] = s.System.CPU.System
-	fields["System.CPU.User"] = s.System.CPU.User
-	fields["System.CPU.Wait"] = s.System.CPU.Wait
-	fields["System.Memory.KiloByte"] = s.System.Memory.KiloByte
-	fields["System.Memory.Percent"] = s.System.Memory.Percent
-	fields["System.Swap.KiloByte"] = s.System.Swap.KiloByte
-	fields["System.Swap.Percent"] = s.System.Swap.Percent
-	return fields
 }
 
 func (m *Monit) structurizeFieldsForTelegraf(acc telegraf.Accumulator) {
@@ -124,7 +108,7 @@ func (m *Monit) structurizeFieldsForTelegraf(acc telegraf.Accumulator) {
 		acc.AddFields("monit-host", structs.Map(host), nil)
 	}
 	for _, system := range m.Systems {
-		acc.AddFields("monit-system", system.createFieldsForTelegraf(), nil)
+		acc.AddFields("monit-system", structs.Map(system), nil)
 	}
 	for _, fifo := range m.Fifos {
 		acc.AddFields("monit-fifo", structs.Map(fifo), nil)
@@ -155,7 +139,6 @@ func getTags(addr *url.URL) map[string]string {
 }
 
 func (m *Monit) Parse(data io.ReadCloser) {
-
 	defer data.Close()
 
 	decoder := xml.NewDecoder(data)
@@ -171,37 +154,37 @@ func (m *Monit) Parse(data io.ReadCloser) {
 			switch {
 			case se.Name.Local == "server":
 				decoder.DecodeElement(&m.Server, &se)
-				fmt.Printf("%+v\n", m.Server)
+				// fmt.Printf("==============%+v\n", m.Server)
 			case se.Name.Local == "platform":
 				decoder.DecodeElement(&m.Platform, &se)
-				fmt.Printf("%+v\n", m.Platform)
+				// fmt.Printf("==============%+v\n", m.Platform)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "0":
 				decoder.DecodeElement(&m.Filesystems, &se)
-				fmt.Printf("%+v\n", m.Filesystems)
+				// fmt.Printf("==============%+v\n", m.Filesystems)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "1":
 				decoder.DecodeElement(&m.Directories, &se)
-				fmt.Printf("%+v\n", m.Directories)
+				// fmt.Printf("==============%+v\n", m.Directories)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "2":
 				decoder.DecodeElement(&m.Files, &se)
-				fmt.Printf("%+v\n", m.Files)
+				// fmt.Printf("==============%+v\n", m.Files)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "3":
 				decoder.DecodeElement(&m.Processes, &se)
-				fmt.Printf("%+v\n", m.Processes)
+				// fmt.Printf("==============%+v\n", m.Processes)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "4":
 				decoder.DecodeElement(&m.Hosts, &se)
-				fmt.Printf("%+v\n", m.Hosts)
+				// fmt.Printf("==============%+v\n", m.Hosts)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "5":
 				decoder.DecodeElement(&m.Systems, &se)
-				fmt.Printf("%+v\n", m.Systems)
+				// fmt.Printf("==============%+v\n", m.Systems)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "6":
 				decoder.DecodeElement(&m.Fifos, &se)
-				fmt.Printf("%+v\n", m.Fifos)
+				// fmt.Printf("==============%+v\n", m.Fifos)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "7":
 				decoder.DecodeElement(&m.Programms, &se)
-				fmt.Printf("%+v\n", m.Programms)
+				// fmt.Printf("==============%+v\n", m.Programms)
 			case se.Name.Local == "service" && se.Attr[0].Name.Local == "type" && se.Attr[0].Value == "8":
 				decoder.DecodeElement(&m.Networks, &se)
-				fmt.Printf("%+v\n", m.Networks)
+				// fmt.Printf("==============%+v\n", m.Networks)
 			}
 		}
 	}
