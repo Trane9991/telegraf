@@ -83,45 +83,48 @@ func (m *MonitConfigs) gatherUrl(addr *url.URL, acc telegraf.Accumulator) error 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("%s returned HTTP status %s", addr.String(), resp.Status)
 	}
-	// tags := getTags(addr)
+	tags := getTags(addr)
 	// TODO fix this. dropping m.Instance data to stop acumulating it
 	m.Instance = Monit{}
 	m.Instance.Parse(resp.Body)
-	m.Instance.structurizeFieldsForTelegraf(acc)
+	m.Instance.structurizeFieldsForTelegraf(acc, tags)
 
 	return nil
 }
 
-func (s *Service) getTags() map[string]string {
-	return map[string]string{"name": s.Name}
+func (s *Service) addTags(tags map[string]string) map[string]string {
+	newTags := tags
+	newTags["name"] = s.Name
+	return newTags
 }
 
-func (m *Monit) structurizeFieldsForTelegraf(acc telegraf.Accumulator) {
-	acc.AddFields("monit-server", structs.Map(m.Server), nil)
-	acc.AddFields("monit-platform", structs.Map(m.Platform), nil)
+func (m *Monit) structurizeFieldsForTelegraf(acc telegraf.Accumulator, tags map[string]string) {
+
+	acc.AddFields("monit-server", structs.Map(m.Server), tags)
+	acc.AddFields("monit-platform", structs.Map(m.Platform), tags)
 	for _, filesystem := range m.Filesystems {
-		acc.AddFields("monit-filesystem", structs.Map(filesystem), filesystem.Service.getTags())
+		acc.AddFields("monit-filesystem", structs.Map(filesystem), filesystem.Service.addTags(tags))
 	}
 	for _, directory := range m.Directories {
-		acc.AddFields("monit-directory", structs.Map(directory), directory.Service.getTags())
+		acc.AddFields("monit-directory", structs.Map(directory), directory.Service.addTags(tags))
 	}
 	for _, process := range m.Processes {
-		acc.AddFields("monit-process", structs.Map(process), process.Service.getTags())
+		acc.AddFields("monit-process", structs.Map(process), process.Service.addTags(tags))
 	}
 	for _, host := range m.Hosts {
-		acc.AddFields("monit-host", structs.Map(host), host.Service.getTags())
+		acc.AddFields("monit-host", structs.Map(host), host.Service.addTags(tags))
 	}
 	for _, system := range m.Systems {
-		acc.AddFields("monit-system", structs.Map(system), system.Service.getTags())
+		acc.AddFields("monit-system", structs.Map(system), system.Service.addTags(tags))
 	}
 	for _, fifo := range m.Fifos {
-		acc.AddFields("monit-fifo", structs.Map(fifo), fifo.Service.getTags())
+		acc.AddFields("monit-fifo", structs.Map(fifo), fifo.Service.addTags(tags))
 	}
 	for _, programm := range m.Programms {
-		acc.AddFields("monit-programm", structs.Map(programm), programm.Service.getTags())
+		acc.AddFields("monit-programm", structs.Map(programm), programm.Service.addTags(tags))
 	}
 	for _, network := range m.Networks {
-		acc.AddFields("monit-network", structs.Map(network), network.Service.getTags())
+		acc.AddFields("monit-network", structs.Map(network), network.Service.addTags(tags))
 	}
 }
 
