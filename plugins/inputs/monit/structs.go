@@ -48,133 +48,71 @@ type Platform struct {
 }
 
 // ServiceFile - monit's <service type="2">
-// <name>monitrc</name>
-// <collected_sec>1468351672</collected_sec>
-// <collected_usec>309506</collected_usec>
-// <status>0</status>
-// <status_hint>0</status_hint>
-// <monitor>1</monitor>
-// <monitormode>0</monitormode>
-// <pendingaction>0</pendingaction>
-// <mode>600</mode>
-// <uid>0</uid>
-// <gid>0</gid>
-// <timestamp>1468351670</timestamp>
-// <size>12375</size>
-// </service>
 type ServiceFile struct {
-	Service `structs:",flatten"`
+	Service        `structs:",flatten"`
+	FileAttributes `structs:",flatten"`
 }
 
 // ServiceDirectory - monit's <service type="1">
-// <name>bin</name>
-// <collected_sec>1468351672</collected_sec>
-// <collected_usec>308827</collected_usec>
-// <status>0</status>
-// <status_hint>0</status_hint>
-// <monitor>1</monitor>
-// <monitormode>0</monitormode>
-// <pendingaction>0</pendingaction>
-// <mode>755</mode>
-// <uid>0</uid>
-// <gid>0</gid>
-// <timestamp>1465722239</timestamp>
-// </service>
 type ServiceDirectory struct {
-	Service `structs:",flatten"`
+	Service        `structs:",flatten"`
+	FileAttributes `structs:",flatten"`
+}
+
+type FileAttributes struct {
+	Mode      int    `xml:"mode"`
+	UID       int    `xml:"uid"`
+	GID       int    `xml:"gid"`
+	Timestamp uint64 `xml:"timestamp"`
+	Size      uint64 `xml:"size"`
 }
 
 // ServiceFifo - monit's <service type="6">
-// <name>testFifo</name>
-// <collected_sec>1468351672</collected_sec>
-// <collected_usec>309509</collected_usec>
-// <status>0</status>
-// <status_hint>0</status_hint>
-// <monitor>1</monitor>
-// <monitormode>0</monitormode>
-// <pendingaction>0</pendingaction>
-// <mode>664</mode>
-// <uid>1000</uid>
-// <gid>1000</gid>
-// <timestamp>1468351653</timestamp>
-// </service>
 type ServiceFifo struct {
-	Service `structs:",flatten"`
+	Service        `structs:",flatten"`
+	FileAttributes `structs:",flatten"`
 }
 
 // ServiceFilesystem - monit's <service type="0">
-// <name>datafs</name>
-// <collected_sec>1468351672</collected_sec>
-// <collected_usec>309040</collected_usec>
-// <status>0</status>
-// <status_hint>0</status_hint>
-// <monitor>1</monitor>
-// <monitormode>0</monitormode>
-// <pendingaction>0</pendingaction>
-// <mode>660</mode>
-// <uid>0</uid>
-// <gid>6</gid>
-// <flags>4096</flags>
-// <block>
-// <percent>4.3</percent>
-// <usage>8470.9</usage>
-// <total>196889.0</total>
-// </block>
-// <inode>
-// <percent>0.6</percent>
-// <usage>73691</usage>
-// <total>12812288</total>
-// </inode>
-// </service>
 type ServiceFilesystem struct {
 	Service `structs:",flatten"`
+	Mode    int `xml:"mode"`
+	UID     int `xml:"uid"`
+	GID     int `xml:"gid"`
+	Flags   int `xml:"flags"`
+	Block   struct {
+		Percent float64 `xml:"percent"`
+		Usage   float64 `xml:"usage"`
+		Total   float64 `xml:"total"`
+	} `xml:"block" structs:",dotflatten"`
+	Inode struct {
+		Percent float64 `xml:"percent"`
+		Usage   float64 `xml:"usage"`
+		Total   float64 `xml:"total"`
+	} `xml:"inode" structs:",dotflatten"`
 }
 
 // ServiceNet - monit's <service type="8">
-// <name>public</name>
-// <collected_sec>1468351672</collected_sec>
-// <collected_usec>309479</collected_usec>
-// <status>0</status>
-// <status_hint>0</status_hint>
-// <monitor>1</monitor>
-// <monitormode>0</monitormode>
-// <pendingaction>0</pendingaction>
-//  <link>
-//   <state>1</state>
-//   <speed>-1</speed>
-//   <duplex>-1</duplex>
-//     <download>
-//       <packets>
-//         <now>0</now>
-//         <total>444601</total>
-//       </packets>
-//       <bytes>
-//          <now>0</now>
-//          <total>380250398</total>
-//       </bytes>
-//       <errors>
-//         <now>0</now>
-//         <total>0</total>
-//       </errors>
-//     </download>
-//     <upload>
-//        <packets>
-//           <now>0</now>
-//           <total>340995</total>
-//        </packets>
-//        <bytes>
-//          <now>0</now>
-//          <total>55739459</total>
-//        </bytes>
-// 		  <errors>
-//           <now>0</now>
-//           <total>0</total>
-//        </errors>
-//      </upload>
-//  </link>
-// </service>
 type ServiceNet struct {
 	Service `structs:",flatten"`
+	Link    struct {
+		State    int     `xml:"state"`
+		Speed    int     `xml:"speed"`
+		Duplex   int     `xml:"duplex"`
+		Download Network `xml:"download" structs:",dotflatten"`
+		Upload   Network `xml:"upload" structs:",dotflatten"`
+	} `xml:"link" structs:",flatten"`
+}
+
+type Network struct {
+	Packets NetworkStats `xml:"packets" structs:",dotflatten"`
+	Bytes   NetworkStats `xml:"bytes" structs:",dotflatten"`
+	Errors  NetworkStats `xml:"errors" structs:",dotflatten"`
+}
+
+type NetworkStats struct {
+	Now   int `xml:"now"`
+	Total int `xml:"total"`
 }
 
 // ServiceProgramm - monit's <service type="7">
@@ -196,24 +134,32 @@ type ServiceNet struct {
 // </service>
 type ServiceProgramm struct {
 	Service `structs:",flatten"`
+	Program struct {
+		Started uint64 `xml:"started"`
+		Status  int    `xml:"status"`
+		Output  string `xml:"output"`
+	} `xml:"program" structs:",flatten"`
 }
 
 // ServiceHost - monit's <service type="4">
-// <name>myserver</name>
-// <collected_sec>1468351672</collected_sec>
-// <collected_usec>309194</collected_usec>
-// <status>0</status>
-// <status_hint>0</status_hint>
-// <monitor>1</monitor>
-// <monitormode>0</monitormode>
-// <pendingaction>0</pendingaction>
-// <icmp>
-// <type>Ping</type>
-// <responsetime>0.000063</responsetime>
-// </icmp>
-// </service>
 type ServiceHost struct {
 	Service `structs:",flatten"`
+	ICMP    SimpleCheck `xml:"icmp,omitempty" structs:",dotflatten"`
+	Port    []Check     `xml:"port" structs:",dotflatten"`
+}
+
+type SimpleCheck struct {
+	Type         string  `xml:"type"`
+	ResponseTime float64 `xml:"responsetime"`
+}
+
+type Check struct {
+	Hostname   string `xml:"hostname,omitempty"`
+	Number     string `xml:"portnumber,omitempty"`
+	UnixSocket string `xml:"unixsocket"`
+	Request    string `xml:"request,omitempty"`
+	Protocol   string `xml:"protocol,omitempty"`
+	SimpleCheck
 }
 
 // ServiceSystem - monit's <service type="5">
@@ -263,6 +209,11 @@ type ServiceProcess struct {
 		Percent      float32 `xml:"percent"`
 		PercentTotal float32 `xml:"percenttotal"`
 	} `xml:"cpu" structs:",dotflatten"`
+	UNIX struct {
+		Path         string `xml:"path"`
+		Protocol     string `xml:"protocol"`
+		ResponseTime string `xml:"responsetime"`
+	} `xml:"unix,omitempty" structs:",dotflatten"`
 }
 
 // Service - common service structure for all subservices
